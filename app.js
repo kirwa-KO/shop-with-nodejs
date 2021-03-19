@@ -2,8 +2,9 @@ const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
 const errorController = require('./controllers/error');
-const mongoConnect = require('./util/database').mongoConnect;
+// const mongoConnect = require('./util/database').mongoConnect;
 const User = require('./models/user');
+const mongoose = require('mongoose');
 
 const app = express();
 
@@ -17,9 +18,9 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use((req, res, next) => {
-	User.findById('60524baabd5f3860042afa6f')
+	User.findById('6054ad0d6d87e63e97d2406b')
 		.then(user => {
-			req.user = new User(user.username, user.email, user._id, user.cart);
+			req.user = user;
 			next();
 		})
 		.catch(err => console.log(err));
@@ -30,6 +31,25 @@ app.use(shopRoutes);
 
 app.use(errorController.get404);
 
-mongoConnect(() => {
-	app.listen(3000, _ => console.log('Running in port 3000..!!!'));
-});
+// mongoConnect(() => {
+// 	app.listen(3000, _ => console.log('Running in port 3000..!!!'));
+// });
+
+mongoose.connect('mongodb+srv://proton:kirwa-KO@cluster0.buffm.mongodb.net/shop?retryWrites=true&w=majority', { useUnifiedTopology: true, useNewUrlParser: true })
+	.then(_ => {
+		User.findOne()
+			.then(user => {
+				if (!user) {
+					const user = new User({
+						username: 'kirwa-KO',
+						email: 'kirwa@gmail.com',
+						cart: {
+							items: []
+						}
+					});
+					user.save();
+				}
+			});
+			app.listen(3000, _ => console.log('Running in port 3000..!!!'));
+	})
+	.catch(err => console.log(err));
